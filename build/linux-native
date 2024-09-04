@@ -1,0 +1,11 @@
+# -*- cmake -*-
+
+set(CMAKE_SYSTEM_NAME Linux)
+
+set(CMAKE_GENERATOR ninja)
+
+set(CMAKE_C_COMPILER /usr/bin/clang)
+set(CMAKE_CXX_COMPILER /usr/bin/clang++)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_SCAN_FOR_MODULES ON)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)

@@ -1,0 +1,78 @@
+#!/bin/bash
+
+function help() {
+    # $1: error message
+    local code=0
+    if [ -n "$1" ]; then
+        code=1
+        echo "ERROR: $1."
+        echo
+    fi
+    echo "Usage: [VARIABLES] $0"
+    echo "VARIABLES:"
+    echo "    clean={y|n}              (default '""$_CLEAN""')"
+    echo "    toolchain=FILE           (default '""$_TOOLCHAIN""')"
+    echo "    type={debug|release}     (default '""$_TYPE""')"
+    exit $code
+}
+
+
+# read variables from config file
+if [ -f .config ]; then
+    source .config
+else
+    # or set default values
+    _CLEAN=${clean:-"n"}
+    _TOOLCHAIN=${toolchain:-"linux-native"}
+    _TYPE=${type:-"debug"}
+fi
+
+
+# check arguments and variables
+[[ "$1" =~ -h|--help ]] && help ""
+
+[[ -n "$1" ]] && help "Invalid argument"
+
+[[ ! "$_CLEAN" =~ y|n ]] && \
+    help "Invalid clean flag"
+
+[[ ! -f "$_TOOLCHAIN" ]] && \
+    help "Toolchain file not found"
+
+[[ ! "$_TYPE" =~ debug|release ]] && \
+    help "Invalid build type '" "$_TYPE" "'"
+
+[ $_CLEAN = y ] && rm -rf $_TYPE
+
+
+# save config for next invocation
+echo '_CLEAN=${clean:-"'$_CLEAN'"}' > .config
+echo '_TOOLCHAIN=${toolchain:-"'$_TOOLCHAIN'"}' >> .config
+echo '_TYPE=${type:-"'$_TYPE'"}' >> .config
+# echo "clean=$_CLEAN" > .config
+# echo "toolchain=$_TOOLCHAIN" >> .config
+# echo "type=$_TYPE" >> .config
+
+
+# start
+if [ "$_CLEAN" = "y" ]; then
+    echo "Clean build $_TYPE for $_TOOLCHAIN"
+else
+    echo "Build $_TYPE for $_TOOLCHAIN"
+fi
+
+if [ -d $_TYPE ]; then
+    # no need to use the toolchain again
+    _TOOLCHAIN_ARG=""
+else
+    mkdir -p $_TYPE
+    _TOOLCHAIN_ARG="--toolchain ../$_TOOLCHAIN"
+fi
+
+cd $_TYPE
+cmake \
+    -GNinja \
+    -DCMAKE_BUILD_TYPE=$_TYPE \
+    $_TOOLCHAIN_ARG \
+    ../../
+ninja
